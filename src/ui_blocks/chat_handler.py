@@ -1,5 +1,8 @@
 """Intent routing and response generation for the EcoMarket Support Assistant."""
 
+import re
+
+from src.agents.return_agent import run_return_agent
 from src.core.router import detect_intent
 from src.services.order_service import get_order
 from src.services.inventory_service import get_product_by_id, get_products_by_name, format_product_summary
@@ -23,15 +26,121 @@ _STOPWORDS = {
     "this", "that", "your",
 }
 
+_ECOMARKET_SCOPE_KEYWORDS = {
+    "ecomarket", "order", "pedido", "tracking", "shipment", "package", "delivery",
+    "return", "refund", "exchange", "label", "rma", "shipping", "ship", "envio",
+    "inventory", "stock", "available", "availability", "product", "item", "catalog",
+    "organic", "sustainable", "eco-friendly", "bamboo", "milk", "beef", "soap",
+    "bread", "perishable", "expire", "expiration", "warehouse", "damaged",
+    "defective", "incorrect", "complaint", "support", "customer service", "p00",
+    "eco201",
+}
+
+_ECOMARKET_SCOPE_RESPONSE = (
+    "I can help with EcoMarket support topics like order status, tracking, shipping, "
+    "returns, return labels, refunds, product information, and inventory availability. "
+    "For questions outside EcoMarket support, I would not be the right assistant."
+)
+
+_ABUSIVE_LANGUAGE_RESPONSE = (
+    "I am here to help, but I cannot continue while abusive language is used. "
+    "For safety, this chat is paused for 1 hour. Please try again later using respectful language."
+)
+
+_GREETING_TERMS = {
+    "hi",
+    "hello",
+    "hey",
+    "hola",
+    "buenas",
+    "good morning",
+    "good afternoon",
+    "good evening",
+}
+
+_GREETING_RESPONSE = """
+Hi, I'm the EcoMarket virtual assistant. I can help with orders, tracking, shipping, returns, return labels, refunds, product information, and inventory availability.
+
+You can try prompts like:
+
+- `Where is my order ECO20105?`
+- `I need help with a return.`
+- `I want to return product P0007 from order ECO20106.`
+- `Do you ship internationally?`
+- `Is product P0001 available in stock?`
+""".strip()
+
+
+def _format_agent_trace_sources(trace: list[dict]) -> list[dict]:
+    """Convert agent tool traces into sidebar-friendly metadata records."""
+    return [
+        {
+            "doc_type": "agent_tool",
+            "source": f"return_agent.{step.get('tool', 'unknown')}",
+            "status": step.get("status", "completed"),
+            "summary": step.get("summary", ""),
+        }
+        for step in trace
+    ]
+
+
+def _is_out_of_scope_general(user_input: str) -> bool:
+    """Detect broad off-domain questions before invoking the general RAG fallback."""
+    lowered = user_input.lower()
+    return not any(keyword in lowered for keyword in _ECOMARKET_SCOPE_KEYWORDS)
+
+
+def _is_greeting(user_input: str) -> bool:
+    """Detect short greeting messages and route them to the welcome response."""
+    cleaned = user_input.strip().lower().strip("!?. ,")
+    return cleaned in _GREETING_TERMS or (
+        len(cleaned.split()) <= 4
+        and any(term in cleaned for term in _GREETING_TERMS)
+    )
+
+
+def _extract_customer_name(user_input: str) -> str | None:
+    """Extract a simple customer name from introductory messages."""
+    patterns = [
+        r"\bmy name is\s+([A-Za-z][A-Za-z' -]{0,40})",
+        r"\bi am\s+([A-Za-z][A-Za-z' -]{0,40})",
+        r"\bi'm\s+([A-Za-z][A-Za-z' -]{0,40})",
+        r"\bsoy\s+([A-Za-z][A-Za-z' -]{0,40})",
+        r"\bme llamo\s+([A-Za-z][A-Za-z' -]{0,40})",
+        r"\bmi nombre es\s+([A-Za-z][A-Za-z' -]{0,40})",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, user_input, flags=re.IGNORECASE)
+        if not match:
+            continue
+        name = match.group(1).strip(" .,!?:;")
+        words = name.split()
+        if 1 <= len(words) <= 3:
+            return " ".join(word.capitalize() for word in words)
+    return None
+
+
+def _build_greeting_response(customer_name: str | None = None) -> str:
+    """Build a welcome response, optionally personalized with a customer name."""
+    if not customer_name:
+        return _GREETING_RESPONSE
+
+    return _GREETING_RESPONSE.replace(
+        "Hi, I'm the EcoMarket virtual assistant.",
+        f"Hello {customer_name}, I'm the EcoMarket virtual assistant.",
+    )
+
 
 def handle_message(
     user_input: str,
     vectorstore,
+    customer_name: str | None = None,
 ) -> tuple[str, list[dict], str, bool]:
     """Route a user message to the correct intent handler and return a grounded response.
 
-    Detects the intent (order_status, return_policy, shipping, inventory, product,
-    human, or general), runs the appropriate structured lookup and/or RAG retrieval,
+    Detects the intent (order_status, return_request, return_policy, shipping,
+    inventory, product, human, or general), runs the appropriate structured lookup and/or RAG retrieval,
     builds the prompt, and calls the LLM. When no vectorstore is available, handlers
     fall back to prompt-only generation or a static fallback message.
 
@@ -55,6 +164,10 @@ def handle_message(
     answer = ""
     sources: list[dict] = []
     rag_used = False
+    detected_customer_name = _extract_customer_name(user_input) or customer_name
+
+    if intent == "abusive_language":
+        return _ABUSIVE_LANGUAGE_RESPONSE, sources, intent, rag_used
 
     # ── order status ──────────────────────────────────────────────────────────
     if intent == "order_status":
@@ -81,7 +194,22 @@ def handle_message(
                 "so I can look it up for you."
             )
 
-    # ── return policy ─────────────────────────────────────────────────────────
+    # return request automation / return policy
+    elif intent == "return_request":
+        if vectorstore is not None:
+            rag_context, sources = retrieve_context_text(
+                user_input, vectorstore, k=4, filter_doc_type="returns_policy"
+            )
+            if not rag_context:
+                rag_context, sources = retrieve_context_text(user_input, vectorstore, k=4)
+            rag_used = bool(rag_context)
+        else:
+            rag_context = ""
+
+        result = run_return_agent(user_input, policy_context=rag_context)
+        answer = result.answer
+        sources = sources + _format_agent_trace_sources(result.trace)
+
     elif intent == "return_policy":
         if vectorstore is not None:
             rag_context, sources = retrieve_context_text(
@@ -180,6 +308,12 @@ def handle_message(
 
     # ── general / catch-all ───────────────────────────────────────────────────
     else:
+        if detected_customer_name or _is_greeting(user_input):
+            return _build_greeting_response(detected_customer_name), sources, intent, rag_used
+
+        if _is_out_of_scope_general(user_input):
+            return _ECOMARKET_SCOPE_RESPONSE, sources, intent, rag_used
+
         if vectorstore is not None:
             rag_context, sources = retrieve_context_text(user_input, vectorstore, k=4)
             rag_used = bool(rag_context)

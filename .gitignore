@@ -18,3 +18,7 @@ Thumbs.db
 
 # IA
 Claude.md
+
+# Runtime artifacts
+logs/
+vectorstore/

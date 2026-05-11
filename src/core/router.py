@@ -1,6 +1,36 @@
 # Keyword sets that trigger each intent.
 # More specific checks run first; fallback is 'general'.
 
+ABUSIVE_LANGUAGE_KEYWORDS = {
+    "fuck you",
+    "go fuck",
+    "shut up",
+    "asshole",
+    "bitch",
+    "idiot",
+    "stupid bot",
+    "mierda",
+    "imbecil",
+    "idiota",
+}
+
+RETURN_REQUEST_KEYWORDS = {
+    "return label",
+    "generate label",
+    "create label",
+    "start a return",
+    "initiate a return",
+    "process a return",
+    "return request",
+    "return authorization",
+    "rma",
+    "want to return",
+    "need to return",
+    "would like to return",
+    "send it back",
+    "send back",
+}
+
 ORDER_KEYWORDS = {
     "order",
     "pedido",
@@ -90,9 +120,10 @@ HUMAN_KEYWORDS = {
 
 
 def detect_intent(text: str) -> str:
-    """Classify user input into one of seven intents using keyword matching.
+    """Classify user input into one of nine intents using keyword matching.
 
-    Precedence: human > order_status > return_policy > shipping > inventory > product > general.
+    Precedence: abusive_language > human > return_request > order_status >
+    return_policy > shipping > inventory > product > general.
 
     Args:
         text: Raw user message.
@@ -102,8 +133,14 @@ def detect_intent(text: str) -> str:
     """
     lowered = text.lower()
 
+    if _contains_abusive_language(lowered):
+        return "abusive_language"
+
     if any(kw in lowered for kw in HUMAN_KEYWORDS):
         return "human"
+
+    if _is_return_request(lowered):
+        return "return_request"
 
     if any(kw in lowered for kw in ORDER_KEYWORDS):
         return "order_status"
@@ -121,3 +158,23 @@ def detect_intent(text: str) -> str:
         return "product"
 
     return "general"
+
+
+def _contains_abusive_language(lowered: str) -> bool:
+    """Detect direct abusive language toward the assistant."""
+    return any(kw in lowered for kw in ABUSIVE_LANGUAGE_KEYWORDS)
+
+
+def _is_return_request(lowered: str) -> bool:
+    """Return True when a message asks the agent to perform a return action."""
+    if any(kw in lowered for kw in RETURN_REQUEST_KEYWORDS):
+        return True
+
+    has_return_language = any(kw in lowered for kw in RETURN_KEYWORDS)
+    has_order_or_product = any(token in lowered for token in ("eco201", "p00", "order", "product", "item"))
+    has_action = any(
+        token in lowered
+        for token in ("start", "initiate", "create", "generate", "process", "request", "label")
+    )
+
+    return has_return_language and has_order_or_product and has_action
