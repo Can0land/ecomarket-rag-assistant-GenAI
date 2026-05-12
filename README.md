@@ -39,11 +39,12 @@ User message (Streamlit)
   → Response displayed   — natural language answer + structured data card
 ```
 
-**Seven supported intents:**
+**Eight supported intents:**
 
 | Intent | Trigger keywords | What the bot does |
 |---|---|---|
-| `order_status` | "order", "tracking", "ECO…" | Structured order lookup + shipping context |
+| `order_status` | "order", "tracking", "ECO..." | Structured order lookup + shipping context |
+| `return_request` | "return label", "start a return", "want to return" | LangChain-tool agent verifies eligibility and renders a simulated visual return label |
 | `return_policy` | "return", "refund", "exchange" | RAG over returns policy PDF |
 | `shipping` | "shipping", "delivery", "international" | RAG over shipping policy PDF |
 | `inventory` | "stock", "available", "perishable", "expire", "P00…" | Structured inventory lookup + RAG |
@@ -60,6 +61,7 @@ User message (Streamlit)
 | UI | Streamlit |
 | LLM | Gemma 2B (via Ollama) |
 | RAG orchestration | LangChain |
+| Agent tools | LangChain `StructuredTool` |
 | Embeddings | HuggingFace `all-MiniLM-L6-v2` |
 | Vector store | FAISS (local, persistent) |
 | Chunking | `RecursiveCharacterTextSplitter` (391 chars / 45 overlap) |
@@ -77,8 +79,11 @@ ecomarket-rag-assistant/
 ├── pyproject.toml                      # uv dependencies
 ├── src/
 │   ├── __init__.py
+│   ├── agents/
+│   │   ├── return_agent.py             # Return automation agent orchestrator
+│   │   └── return_tools.py             # LangChain tools for return actions
 │   ├── core/
-│   │   ├── router.py                   # Intent detection (7 intents)
+│   │   ├── router.py                   # Intent detection (8 intents)
 │   │   └── utils.py                    # Tracking extraction, formatters
 │   ├── llm/
 │   │   ├── llm_client.py               # Ollama client wrapper
@@ -213,6 +218,8 @@ Open **http://localhost:8501** in your browser.
 | `Where is my order ECO20105?` | `order_status` |
 | `Why is my order ECO20111 delayed?` | `order_status` |
 | `Does my order ECO20120 contain perishable products?` | `order_status` |
+| `I want to return product P0007 from order ECO20106. It is unused and the original packaging is intact.` | `return_request` |
+| `Can you generate a return label for product P0007 from order ECO20106?` | `return_request` |
 | `Can I return an opened hygiene product?` | `return_policy` |
 | `What is the return window for electronics?` | `return_policy` |
 | `What is the shipping policy for delayed orders?` | `shipping` |
@@ -225,6 +232,16 @@ Open **http://localhost:8501** in your browser.
 | `What sustainable cleaning products do you have?` | `product` |
 | `What should I do if my product arrived damaged?` | `return_policy` |
 | `I am very upset and want to complain` | `human` (escalation) |
+
+---
+
+## Final Project Agent Documentation
+
+The final project extension is documented in:
+
+- `docs/proyecto_final_fase_1_agent_architecture.md`
+- `docs/proyecto_final_fase_3_critical_analysis.md`
+- `docs/proyecto_final_demo_prompts.md`
 
 ---
 
