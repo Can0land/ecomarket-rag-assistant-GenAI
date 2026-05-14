@@ -91,7 +91,7 @@ La tool usa las reglas de la politica de devoluciones:
 - Producto sin usar y con empaque original intacto.
 - Productos perecederos solo son retornables si llegaron danados, defectuosos, vencidos,
   deteriorados o incorrectos.
-- Reclamos por dano o producto incorrecto requieren evidencia fotografica y reporte dentro de
+- Reclamos por daño o producto incorrecto requieren evidencia fotografica y reporte dentro de
   48 horas.
 - Como el prototipo actual no permite cargar ni validar imagenes, esos reclamos no se aprueban
   automaticamente. El agente devuelve `manual_review` y prepara un handoff a soporte humano
