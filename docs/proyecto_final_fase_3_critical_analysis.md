@@ -8,7 +8,7 @@ ejecutar una accion simulada. Esto obliga a controlar mejor las decisiones.
 ### Riesgo 1: aprobacion incorrecta de devoluciones
 
 Un LLM podria aprobar una devolucion que no cumple la politica, por ejemplo un producto perecedero
-sin evidencia de dano.
+sin evidencia de daño.
 
 Mitigacion:
 
@@ -166,14 +166,14 @@ Cada integracion deberia tener permisos minimos, logs y rollback.
 ### 6. Carga y validacion de evidencia fotografica
 
 Una mejora directa seria permitir que el usuario cargue imagenes en Streamlit como evidencia de
-dano, deterioro o producto incorrecto. Esa evidencia podria asociarse al RMA y pasar por una capa
+daño, deterioro o producto incorrecto. Esa evidencia podria asociarse al RMA y pasar por una capa
 de vision computacional.
 
 Una posible arquitectura futura:
 
 - `st.file_uploader` para recibir la imagen.
 - Almacenamiento temporal o persistente de la evidencia.
-- Modelo YOLO entrenado con imagenes de productos EcoMarket y ejemplos de dano.
+- Modelo YOLO entrenado con imagenes de productos EcoMarket y ejemplos de daño.
 - Validacion de confianza del modelo.
 - Escalamiento a humano cuando la confianza sea baja o el caso sea ambiguo.
 
