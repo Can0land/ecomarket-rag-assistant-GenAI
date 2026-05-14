@@ -31,7 +31,7 @@ information such as order statuses, return rules, or product expiration dates.
 
 ```
 User message (Streamlit)
-  → Intent detection     — keyword-based router (7 intents)
+  → Intent detection     — keyword-based router (8 intents)
   → Structured lookup    — orders (JSON) or inventory (Excel) when applicable
   → RAG retrieval        — top-4 relevant chunks from FAISS knowledge base
   → Prompt construction  — retrieved context + structured data + few-shot examples
