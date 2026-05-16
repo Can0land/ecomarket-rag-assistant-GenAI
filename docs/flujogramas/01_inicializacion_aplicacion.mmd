@@ -1,0 +1,26 @@
+flowchart TD
+    A[Inicio de la app Streamlit<br/>app.py] --> B[Configurar pagina<br/>titulo, icono, layout]
+    B --> C[load_vectorstore con cache_resource]
+    C --> D{Existe indice FAISS<br/>vectorstore/faiss_index?}
+    D -->|Si| E[Cargar FAISS local<br/>load_vectorstore]
+    D -->|No| F[Cargar documentos desde data]
+    F --> F1[PDF politica devoluciones]
+    F --> F2[PDF politica envios]
+    F --> F3[Excel inventario]
+    F --> F4[Excel catalogo]
+    F --> F5[JSON ordenes]
+    F1 --> G[Chunking<br/>391 caracteres, 45 overlap]
+    F2 --> G
+    F3 --> G
+    F4 --> G
+    F5 --> G
+    G --> H[Crear embeddings<br/>all-MiniLM-L6-v2]
+    H --> I[Construir y guardar indice FAISS]
+    E --> J[Vectorstore listo]
+    I --> J
+    C -->|Error| K[Mostrar error en UI<br/>vectorstore = None]
+    J --> L[Inicializar session_state]
+    K --> L
+    L --> M[messages, last_intent, last_sources,<br/>rag_used, pending_return_request,<br/>customer_name, blocked_until]
+    M --> N[Renderizar sidebar y mensajes previos]
+    N --> O[Esperar entrada del usuario<br/>st.chat_input]

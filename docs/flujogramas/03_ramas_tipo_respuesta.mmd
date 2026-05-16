@@ -1,0 +1,26 @@
+flowchart LR
+    A[Mensaje del usuario] --> B[Router de intenciones]
+    B --> C[Respuesta estatica]
+    B --> D[Datos estructurados]
+    B --> E[RAG + LLM]
+    B --> F[Agente con tools]
+
+    C --> C1[abusive_language<br/>blocked<br/>saludo<br/>fuera de alcance<br/>faltan datos]
+
+    D --> D1[order_service<br/>orders_enhanced.json]
+    D --> D2[inventory_service<br/>inventory_200_products_named.xlsx]
+    D1 --> D3[LLM + tarjeta de orden]
+    D2 --> D4[LLM + registro de producto]
+
+    E --> E1[retrieve_context_text]
+    E1 --> E2[FAISS similarity_search_with_score]
+    E2 --> E3[Contexto + sources]
+    E3 --> E4[Prompt especifico por intent]
+    E4 --> E5[Gemma 2B via Ollama]
+
+    F --> F1[return_agent]
+    F1 --> F2[verify_return_eligibility]
+    F1 --> F3[generate_return_label]
+    F1 --> F4[log_return_action]
+    F2 --> F5[Respuesta aprobada,<br/>rechazada, incompleta o manual_review]
+    F3 --> F6[SVG de etiqueta renderizado en Streamlit]

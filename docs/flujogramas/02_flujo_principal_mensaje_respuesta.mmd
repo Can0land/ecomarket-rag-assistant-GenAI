@@ -1,0 +1,93 @@
+flowchart TD
+    A[Usuario escribe mensaje<br/>st.chat_input] --> B[Guardar mensaje del usuario<br/>st.session_state.messages]
+    B --> C[Mostrar mensaje en el chat]
+    C --> D{Chat bloqueado<br/>por lenguaje abusivo?}
+    D -->|Si| E[Responder pausa temporal<br/>calcular minutos restantes]
+    E --> F[Actualizar estado:<br/>intent=blocked, sin sources, rag_used=False]
+    F --> G[Guardar respuesta del asistente]
+    G --> H[Renderizar respuesta]
+    H --> I[st.rerun]
+
+    D -->|No| J{Hay devolucion pendiente<br/>en session_state?}
+    J -->|Si| K{Mensaje parece continuacion?<br/>producto, confirmacion, packaging, etc.}
+    K -->|Si| L[Construir effective_input<br/>con contexto acumulado]
+    K -->|No| M[Usar user_input original]
+    J -->|No| M
+    L --> N[Extraer nombre del cliente<br/>si el mensaje lo contiene]
+    M --> N
+
+    N --> O[handle_message effective_input]
+    O --> P[detect_intent<br/>router por keywords con prioridad]
+
+    P --> Q{Intent detectado}
+
+    Q -->|abusive_language| R[Respuesta firme y educada<br/>sin llamar RAG ni LLM]
+    R --> R1[blocked_until = ahora + 1 hora<br/>limpiar devolucion pendiente]
+
+    Q -->|human| S[Construir prompt de escalamiento<br/>build_human_prompt]
+    S --> S1[LLM Gemma 2B via Ollama]
+
+    Q -->|order_status| T{Hay tracking ECO...?}
+    T -->|No| T1[Pedir numero de orden]
+    T -->|Si| T2[Buscar orden en orders_enhanced.json]
+    T2 --> T3{Orden existe?}
+    T3 -->|No| T4[Informar que no se encontro]
+    T3 -->|Si| T5[Recuperar contexto RAG opcional<br/>top-k=3]
+    T5 --> T6[build_order_prompt<br/>orden + contexto + ejemplos]
+    T6 --> T7[LLM Gemma 2B]
+    T7 --> T8[Agregar tarjeta estructurada<br/>format_order_response]
+
+    Q -->|return_request| U[Recuperar politica de devoluciones<br/>RAG filter returns_policy top-k=4]
+    U --> U1[Si no hay contexto,<br/>buscar en toda la base]
+    U1 --> U2[run_return_agent]
+
+    Q -->|return_policy| V[Recuperar returns_policy<br/>fallback a busqueda general]
+    V --> V1[build_return_prompt]
+    V1 --> V2[LLM Gemma 2B]
+
+    Q -->|shipping| W[Recuperar shipping_policy<br/>fallback a busqueda general]
+    W --> W1[build_shipping_prompt]
+    W1 --> W2[LLM Gemma 2B]
+
+    Q -->|inventory| X[Buscar producto por ID P0001<br/>o por nombre en Excel]
+    X --> X1[Recuperar contexto RAG general]
+    X1 --> X2{Hay producto o contexto?}
+    X2 -->|No| X3[Pedir ID o nombre del producto]
+    X2 -->|Si| X4[build_inventory_prompt<br/>registro estructurado + RAG]
+    X4 --> X5[LLM Gemma 2B]
+    X5 --> X6[Agregar Product record<br/>si hubo dato estructurado]
+
+    Q -->|product| Y[Recuperar product_catalog<br/>fallback a busqueda general]
+    Y --> Y1[build_product_prompt]
+    Y1 --> Y2[LLM Gemma 2B]
+
+    Q -->|general| Z{Saludo o nombre detectado?}
+    Z -->|Si| Z1[Responder saludo personalizado]
+    Z -->|No| Z2{Pregunta fuera del alcance<br/>de EcoMarket?}
+    Z2 -->|Si| Z3[Responder limites del asistente]
+    Z2 -->|No| Z4[Recuperar contexto RAG general]
+    Z4 --> Z5[build_general_prompt]
+    Z5 --> Z6[LLM Gemma 2B]
+
+    R1 --> AA[Actualizar last_intent,<br/>last_sources, rag_used]
+    S1 --> AA
+    T1 --> AA
+    T4 --> AA
+    T8 --> AA
+    U2 --> AA
+    V2 --> AA
+    W2 --> AA
+    X3 --> AA
+    X6 --> AA
+    Y2 --> AA
+    Z1 --> AA
+    Z3 --> AA
+    Z6 --> AA
+
+    AA --> AB{Intent es return_request<br/>y falta informacion?}
+    AB -->|Si| AC[Guardar pending_return_request<br/>tracking, producto, input acumulado]
+    AB -->|No| AD[Limpiar o conservar segun caso]
+    AC --> AE[Guardar respuesta del asistente]
+    AD --> AE
+    AE --> AF[Renderizar markdown y SVG si existe]
+    AF --> AG[st.rerun para refrescar UI]

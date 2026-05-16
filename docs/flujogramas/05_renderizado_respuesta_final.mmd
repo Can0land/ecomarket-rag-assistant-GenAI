@@ -1,0 +1,14 @@
+flowchart TD
+    A[Respuesta generada o estatica] --> B[Actualizar session_state]
+    B --> C[last_intent]
+    B --> D[last_sources]
+    B --> E[rag_used]
+    B --> F[pending_return_request si aplica]
+    B --> G[blocked_until si hubo abuso]
+    B --> H[Agregar mensaje assistant<br/>a historial]
+    H --> I{La respuesta contiene<br/>RETURN_LABEL_SVG_START?}
+    I -->|Si| J[Separar markdown y SVG]
+    J --> K[Renderizar SVG con components.html]
+    I -->|No| L[Renderizar markdown normal]
+    K --> M[st.rerun]
+    L --> M

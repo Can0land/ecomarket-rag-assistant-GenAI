@@ -1,0 +1,37 @@
+flowchart TD
+    A[Intent return_request] --> B[Recuperar contexto de politica<br/>returns_policy con RAG]
+    B --> C[run_return_agent]
+    C --> D{Hay tracking ECO...?}
+    D -->|No| E[Pedir numero de orden<br/>y producto]
+    D -->|Si| F[Buscar orden<br/>get_order]
+    F --> G{Orden existe?}
+    G -->|No| H[Informar orden no encontrada]
+    G -->|Si| I[Identificar producto en la orden]
+    I --> J{Producto identificado?}
+    J -->|No| K[Listar items de la orden<br/>pedir cual desea devolver]
+    J -->|Si| L[Extraer contexto de devolucion]
+
+    L --> L1[Reglas deterministicas:<br/>motivo, unused, packaging,<br/>foto, reporte 48h]
+    L --> L2{Mensaje ambiguo<br/>con terminos semanticos?}
+    L2 -->|Si| L3[LLM como parser JSON estrecho<br/>no decide elegibilidad]
+    L2 -->|No| M[Contexto final]
+    L3 --> M
+
+    M --> N[Tool: verify_return_eligibility]
+    N --> O{Resultado}
+
+    O -->|eligible| P[Tool: generate_return_label]
+    P --> Q[Tool: log_return_action<br/>return_label_generated]
+    Q --> R[Respuesta aprobada<br/>RMA, label ID, tracking,<br/>instrucciones y SVG]
+
+    O -->|needs_more_information| S[Tool: log_return_action<br/>return_information_needed]
+    S --> T[Pedir confirmaciones faltantes]
+    T --> U[Guardar pending_return_request<br/>para continuar conversacion]
+
+    O -->|manual_review| V[Tool: log_return_action<br/>return_manual_review_required]
+    V --> W[Explicar handoff humano<br/>por evidencia fotografica]
+
+    O -->|not_eligible| X[Tool: log_return_action<br/>return_denied]
+    X --> Y[Explicar rechazo<br/>con reglas de politica]
+
+    O -->|error| Z[Responder error especifico<br/>orden/producto no valido]
