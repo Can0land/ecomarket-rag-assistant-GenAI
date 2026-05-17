@@ -1,0 +1,20 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "24px", "primaryColor": "#EEF6FF", "primaryBorderColor": "#2F80ED", "primaryTextColor": "#111827", "lineColor": "#111827", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 44, "rankSpacing": 42}}}%%
+flowchart TD
+    A["Usuario escribe en el chat"] --> B["app.py guarda el mensaje"]
+    B --> C["chat_handler.py procesa la entrada"]
+    C --> D["router.py detecta la intencion"]
+    D --> E["Se elige el flujo correcto"]
+    E --> F["Datos, RAG, agente o respuesta directa"]
+    F --> G["Gemma genera o mejora la respuesta"]
+    G --> H["Streamlit muestra el resultado"]
+
+    classDef user fill:#EEF6FF,stroke:#2F80ED,stroke-width:3px,color:#111827;
+    classDef app fill:#EFFAF1,stroke:#27AE60,stroke-width:3px,color:#111827;
+    classDef logic fill:#F4ECFF,stroke:#8E44AD,stroke-width:3px,color:#111827;
+    classDef data fill:#EAF8FB,stroke:#22A6B3,stroke-width:3px,color:#111827;
+    classDef llm fill:#FFF3E8,stroke:#F2994A,stroke-width:3px,color:#111827;
+    class A user;
+    class B,C,H app;
+    class D,E logic;
+    class F data;
+    class G llm;

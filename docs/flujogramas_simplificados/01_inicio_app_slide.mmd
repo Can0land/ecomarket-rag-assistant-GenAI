@@ -1,0 +1,14 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "24px", "primaryColor": "#EEF6FF", "primaryBorderColor": "#2F80ED", "primaryTextColor": "#111827", "lineColor": "#111827", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 44, "rankSpacing": 42}}}%%
+flowchart TD
+    A["Usuario abre EcoMarket"] --> B["Streamlit inicia app.py"]
+    B --> C["Se carga o crea FAISS"]
+    C --> D["Documentos, Excel y JSON quedan listos"]
+    D --> E["Se inicializa session_state"]
+    E --> F["La app espera el mensaje"]
+
+    classDef user fill:#EEF6FF,stroke:#2F80ED,stroke-width:3px,color:#111827;
+    classDef app fill:#EFFAF1,stroke:#27AE60,stroke-width:3px,color:#111827;
+    classDef data fill:#EAF8FB,stroke:#22A6B3,stroke-width:3px,color:#111827;
+    class A user;
+    class B,E,F app;
+    class C,D data;

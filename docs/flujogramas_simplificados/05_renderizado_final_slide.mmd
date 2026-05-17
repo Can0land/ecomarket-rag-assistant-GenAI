@@ -1,0 +1,19 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "24px", "primaryColor": "#EEF6FF", "primaryBorderColor": "#2F80ED", "primaryTextColor": "#111827", "lineColor": "#111827", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 46, "rankSpacing": 44}}}%%
+flowchart TD
+    A["Respuesta lista"] --> B["Actualizar session_state"]
+    B --> C["Guardar historial y fuentes"]
+    C --> D{"Incluye etiqueta SVG?"}
+    D -->|"Si"| E["Separar texto y SVG"]
+    E --> F["Renderizar etiqueta en Streamlit"]
+    D -->|"No"| G["Renderizar markdown normal"]
+    F --> H["Refrescar interfaz"]
+    G --> H
+
+    classDef app fill:#EFFAF1,stroke:#27AE60,stroke-width:3px,color:#111827;
+    classDef data fill:#EAF8FB,stroke:#22A6B3,stroke-width:3px,color:#111827;
+    classDef decision fill:#F4ECFF,stroke:#8E44AD,stroke-width:3px,color:#111827;
+    classDef output fill:#EEF6FF,stroke:#2F80ED,stroke-width:3px,color:#111827;
+    class A,B,H app;
+    class C data;
+    class D decision;
+    class E,F,G output;

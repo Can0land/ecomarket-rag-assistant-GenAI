@@ -1,0 +1,25 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "22px", "primaryColor": "#EEF6FF", "primaryBorderColor": "#2F80ED", "primaryTextColor": "#111827", "lineColor": "#111827", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 52, "rankSpacing": 54}}}%%
+flowchart LR
+    A["Mensaje del usuario"] --> B["Router de intenciones"]
+    B --> C["Respuesta directa"]
+    B --> D["Datos estructurados"]
+    B --> E["RAG + LLM"]
+    B --> F["Agente de devoluciones"]
+
+    C --> C1["Saludo, abuso, limites o datos faltantes"]
+    D --> D1["Ordenes e inventario"]
+    E --> E1["Politicas y catalogo"]
+    F --> F1["Tools: validar, generar etiqueta y registrar"]
+
+    classDef user fill:#EEF6FF,stroke:#2F80ED,stroke-width:3px,color:#111827;
+    classDef logic fill:#F4ECFF,stroke:#8E44AD,stroke-width:3px,color:#111827;
+    classDef direct fill:#FFF9E6,stroke:#F2C94C,stroke-width:3px,color:#111827;
+    classDef data fill:#EAF8FB,stroke:#22A6B3,stroke-width:3px,color:#111827;
+    classDef llm fill:#FFF3E8,stroke:#F2994A,stroke-width:3px,color:#111827;
+    classDef agent fill:#FCEAF1,stroke:#EB5757,stroke-width:3px,color:#111827;
+    class A user;
+    class B logic;
+    class C,C1 direct;
+    class D,D1 data;
+    class E,E1 llm;
+    class F,F1 agent;

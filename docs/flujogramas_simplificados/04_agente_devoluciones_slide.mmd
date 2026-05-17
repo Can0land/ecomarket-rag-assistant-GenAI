@@ -1,0 +1,25 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "23px", "primaryColor": "#EEF6FF", "primaryBorderColor": "#2F80ED", "primaryTextColor": "#111827", "lineColor": "#111827", "tertiaryColor": "#FFFFFF"}, "flowchart": {"curve": "linear", "nodeSpacing": 44, "rankSpacing": 42}}}%%
+flowchart TD
+    A["Usuario solicita devolucion"] --> B["Se busca orden y producto"]
+    B --> C{"Informacion completa?"}
+    C -->|"No"| D["Se piden datos faltantes"]
+    C -->|"Si"| E["Tool valida politica de devolucion"]
+    E --> F{"Resultado"}
+    F -->|"Aprobada"| G["Se genera etiqueta RMA"]
+    F -->|"Faltan datos"| D
+    F -->|"Revision humana"| H["Se escala a soporte"]
+    F -->|"Rechazada"| I["Se explica la regla aplicada"]
+    G --> J["Se registra la accion y se muestra SVG"]
+
+    classDef user fill:#EEF6FF,stroke:#2F80ED,stroke-width:3px,color:#111827;
+    classDef app fill:#EFFAF1,stroke:#27AE60,stroke-width:3px,color:#111827;
+    classDef decision fill:#F4ECFF,stroke:#8E44AD,stroke-width:3px,color:#111827;
+    classDef tool fill:#FFF3E8,stroke:#F2994A,stroke-width:3px,color:#111827;
+    classDef warn fill:#FFF9E6,stroke:#F2C94C,stroke-width:3px,color:#111827;
+    classDef stop fill:#FCEAF1,stroke:#EB5757,stroke-width:3px,color:#111827;
+    class A user;
+    class B,D,J app;
+    class C,F decision;
+    class E,G tool;
+    class H warn;
+    class I stop;
